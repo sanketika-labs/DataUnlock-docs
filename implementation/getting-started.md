@@ -13,7 +13,7 @@ Before beginning, ensure you have:
 
 ## Implementation Roadmap
 
-### Phase 1: Assessment & Planning (4–6 weeks)
+### Phase 1: Assessment & Planning
 
 **Objective:** Understand the current state of your data and define what success looks like.
 
@@ -52,7 +52,7 @@ Using the [Data Boarding Pass schema](../architecture/data-boarding-pass.md), cr
 
 Map your organisations to the [business architecture roles](../architecture/business-architecture.md): Sponsor, Problem Curator, DIPs, Data Unlocker, DIUs, Nodal Agency.
 
-### Phase 2: Prepare Layer Implementation (6–12 weeks)
+### Phase 2: Prepare Layer Implementation
 
 **Objective:** Make all participating datasets discoverable, governed, and trustworthy.
 
@@ -72,7 +72,7 @@ For each DIP:
 
 **Deliverable:** Level 1 conformance. Datasets are discoverable, schema-documented, governed, and provenance-verified.
 
-### Phase 3: Connect Layer Implementation (8–16 weeks)
+### Phase 3: Connect Layer Implementation
 
 **Objective:** Enable cross-source linking and federated queries.
 
@@ -88,7 +88,7 @@ For each DIP:
 
 **Deliverable:** Level 2 conformance. Datasets are linkable and queryable across institutions.
 
-### Phase 4: Enable + Apply Layers (12–24 weeks)
+### Phase 4: Enable + Apply Layers
 
 **Objective:** Make data AI-ready and deliver user-facing interfaces.
 
@@ -108,7 +108,7 @@ For each DIP:
 
 **Deliverable:** Level 3 conformance. Full AI-ready data infrastructure.
 
-### Phase 5: Operationalise (Ongoing)
+### Phase 5: Operationalise
 
 1. **Monitor data quality.** Implement automated quality checks against the Data Quality Scorecard.
 2. **Manage embedding versioning.** When models are updated, follow the Vector Versioning Policy.
