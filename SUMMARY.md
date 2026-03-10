@@ -28,7 +28,6 @@
 ## Implementation Guide
 
 * [Getting Started](implementation/getting-started.md)
-* [Roles & Responsibilities](implementation/roles-and-responsibilities.md)
 * [Compliance Checklist](implementation/compliance-checklist.md)
 
 ## Reference Implementations (India)
