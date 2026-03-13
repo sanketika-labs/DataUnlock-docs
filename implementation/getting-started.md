@@ -108,7 +108,7 @@ For each DIP:
 
 **Deliverable:** Level 3 conformance. Full AI-ready data infrastructure.
 
-### Phase 5: Operationalise
+### Phase 5: Operationalise (Ongoing)
 
 1. **Monitor data quality.** Implement automated quality checks against the Data Quality Scorecard.
 2. **Manage embedding versioning.** When models are updated, follow the Vector Versioning Policy.

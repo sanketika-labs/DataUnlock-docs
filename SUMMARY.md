@@ -12,9 +12,10 @@
 ## Architecture
 
 * [Business Architecture](architecture/business-architecture.md)
-* [Core Building Blocks](architecture/building-blocks.md)
 * [Data Boarding Pass](architecture/data-boarding-pass.md)
 * [Data Passport](architecture/data-passport.md)
+* [Technical Architecture](architecture/technical-architecture.md)
+* [Core Building Blocks](architecture/building-blocks.md)
 
 ## Technical Specifications
 
