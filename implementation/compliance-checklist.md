@@ -21,14 +21,38 @@ Use this checklist to verify that your Data Unlock deployment conforms to the sp
 - [ ] All field names follow `snake_case` convention
 - [ ] All dates use ISO 8601 format
 - [ ] All text is encoded in UTF-8
-- [ ] Geographic identifiers use ISO 3166 or equivalent national registry
+- [ ] Geographic identifiers use ISO 3166 or equivalent national registry (e.g., LGD codes, Census codes)
+- [ ] Geographic identifier codes are consistent across all datasets published by the same DIP (a state code must resolve to the same state in every dataset)
 - [ ] Currency values use ISO 4217 codes
+- [ ] Time period formats are consistent across datasets from the same DIP (e.g., all use financial year YYYY-YY, or all use calendar year YYYY — not a mix)
+- [ ] Parameter names for the same concept use the same name and format across all datasets (e.g., geographic filter is always `state_code` with the same code space, not different names or numbering systems per dataset)
 
 ### Data Formats
 
 - [ ] Data is available in Apache Parquet (primary format)
 - [ ] CSV is available as a secondary distribution format
 - [ ] Null values are represented as explicit nulls (not empty strings, "N/A", or "-")
+- [ ] Null semantics are documented: the schema or data dictionary explains what null means for each field (e.g., "not collected", "not applicable", "below reporting threshold"), and how null differs from zero or missing records
+- [ ] Numeric values are returned in their declared data types (numbers as numbers, not as strings that require parsing)
+- [ ] Numeric precision is appropriate for the domain (no false precision, e.g., GDP values with 15 decimal digits when measured in crores)
+
+### Data Quality
+
+- [ ] A Data Quality Scorecard is published for each data product conforming to the scorecard schema
+- [ ] Core metrics are assessed: completeness, accuracy, uniqueness, and validity (all ≥ 0.90)
+- [ ] Every value field has a documented unit of measurement (e.g., "percentage", "₹ crore", "kg per hectare") — not just a label but a unit from a controlled vocabulary or explicitly defined
+- [ ] Structural integrity is assessed: type fidelity, null semantics, unit standardisation, identifier consistency, naming convention compliance
+- [ ] A data dictionary exists for each data product, providing formal definitions (not just labels) for every field and indicator, including methodology references and computation details
+- [ ] A release calendar is published documenting the expected publication schedule and update frequency (e.g., "monthly, approximately 14 days after reference period" or "annual, advance estimate in January, revised in May")
+- [ ] Revision policy is documented: if data undergoes revisions (provisional → revised → final), the policy states how many revision stages exist, their expected timelines, and how to identify the most current version programmatically
+
+### API & Access
+
+- [ ] API result size limits (pagination) are documented, including default and maximum page sizes
+- [ ] API responses signal when results are truncated (i.e., when more records exist beyond the returned page)
+- [ ] Error responses are informative: the API distinguishes between invalid filter combinations, not-yet-published data, empty result sets, and server errors (not a generic empty response for all failure modes)
+- [ ] Filter codes and parameter values are documented in a machine-readable format (not just human-readable labels) and are self-describing or map to recognized standards
+- [ ] If the dataset undergoes revisions, the API provides a mechanism to retrieve only the latest/most authoritative version without requiring consumers to fetch all versions and apply their own priority logic
 
 ### Access Policies
 
@@ -45,11 +69,13 @@ Use this checklist to verify that your Data Unlock deployment conforms to the sp
 - [ ] The VC includes lineage information (sources, transformations, agents)
 - [ ] The proof uses Ed25519Signature2020 or JsonWebSignature2020
 
-### Data Passport
+### Metadata & Documentation
 
 - [ ] Every data product has a Data Passport document
 - [ ] Data Passport includes: Identity, Discovery, Structure, Quality, Provenance, and Policy sections
 - [ ] Data Passport is resolvable via its URI
+- [ ] Source methodology documentation is linked from the Data Passport (survey design, sampling methodology, technical notes, or equivalent)
+- [ ] Changes in methodology across time periods are documented, with clear indicators of which time ranges are comparable
 
 ---
 

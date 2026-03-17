@@ -272,18 +272,96 @@ VCs establish an immutable, cryptographically verifiable audit trail. When Data 
 
 ---
 
-## Open Item: Data Quality Scorecard
+## Data Quality Scorecard
 
-The current specification identifies a need for a standardised **Data Quality Scorecard** schema. Without a shared definition of quality, consuming systems may ingest data that is technically "standardised" but factually inaccurate.
+Without a shared definition of quality, consuming systems may ingest data that is technically "standardised" but factually inaccurate. The Data Quality Scorecard defines a standard set of metrics that every DIP **must** publish for each data product as part of its Data Passport.
 
-The scorecard should define metrics for:
+The scorecard is organised into three tiers: **Core Metrics** (fundamental quality dimensions applicable to any dataset), **Structural Integrity Metrics** (measuring whether the data's technical representation is correct and consistent), and **Operational Metrics** (measuring the reliability of the data as a living, maintained product).
 
-| Metric | Description | Measurement |
+### Core Metrics
+
+| Metric | Description | Measurement | Example |
+|---|---|---|---|
+| **Completeness** | Percentage of non-null values across required fields | 0.0 – 1.0 | A dataset with 94% non-null values across required fields scores 0.94 |
+| **Accuracy** | Percentage of values that pass domain-specific validation rules | 0.0 – 1.0 | If 3% of district codes fail to resolve against the LGD master list, accuracy = 0.97 |
+| **Uniqueness** | Percentage of records with no unintended duplicates on the declared primary key | 0.0 – 1.0 | If a dataset returns the same record twice for a given year + state + indicator combination, uniqueness < 1.0 |
+| **Validity** | Percentage of values that conform to the declared schema constraints (type, range, enum, pattern) | 0.0 – 1.0 | If a numeric field contains non-parseable string values (e.g., "N/A" instead of null), validity < 1.0 |
+
+### Structural Integrity Metrics
+
+These metrics address data representation issues that create silent failures in consuming systems — issues often invisible during casual inspection but critical for automated pipelines.
+
+| Metric | Description | Measurement | Example |
+|---|---|---|---|
+| **Type Fidelity** | Percentage of fields returned in their declared data type (not as strings or mismatched types) | 0.0 – 1.0 | If an API returns numeric values as strings (e.g., "3.20" instead of 3.20), type fidelity < 1.0. Consuming systems must then parse strings, handle edge cases, and risk precision loss |
+| **Null Semantics** | Whether the dataset documents null patterns and distinguishes between "not collected", "not applicable", "zero", and "error" | Boolean + documentation | A dataset where missing values silently omit the record (rather than returning null) scores poorly — the consumer cannot distinguish "data not collected" from "query error" |
+| **Unit Standardisation** | Whether all value fields have a documented unit of measurement from a controlled vocabulary | Boolean per field | If one dataset returns "%" as the unit, another returns "₹ crore", and a third returns values with no unit metadata, unit standardisation fails |
+| **Precision Appropriateness** | Whether numeric values use appropriate decimal precision for the domain | Boolean | GDP values returned with 15-digit decimal precision (e.g., "32411405.953773014") imply false accuracy when the underlying data is measured in crores |
+| **Identifier Consistency** | Whether entity identifiers (geographic codes, classification codes, temporal formats) are consistent across all datasets published by the same DIP | 0.0 – 1.0 | If state codes use one numbering system in dataset A and an entirely different system in dataset B, cross-dataset analysis requires a manual mapping table. This is a critical failure for automated pipelines |
+| **Naming Convention Compliance** | Whether field names, parameter names, and filter codes follow documented naming conventions and use consistent terminology across datasets | 0.0 – 1.0 | If time period is called `year` in one dataset (with format YYYY-YY), `year` in another (with format YYYY), and `quarterly_code` in a third, naming convention compliance is low |
+
+### Operational Metrics
+
+These metrics measure whether the data product is reliably maintained and operationally fit for automated consumption.
+
+| Metric | Description | Measurement | Example |
+|---|---|---|---|
+| **Timeliness** | The lag between the reference period end date and actual publication/availability | Duration (ISO 8601) | If CPI data for January 2026 is published on 12 February 2026, timeliness = P12D. Shorter is better |
+| **Update Adherence** | Whether the dataset is updated according to its declared schedule | 0.0 – 1.0 | If a monthly dataset has missed 2 of the last 12 updates, adherence = 0.83 |
+| **Release Calendar** | Whether a machine-readable publication schedule exists, documenting when the next update is expected | Boolean | Automated pipelines need to know when to re-fetch data. Without a release calendar, consumers must poll blindly |
+| **Revision Transparency** | Whether the dataset identifies revision vintages and provides a programmatic way to retrieve the latest/most authoritative version | Ordinal: none / partial / full | If a dataset includes multiple revision stages (advance estimate, revised, final) but provides no field indicating which is most current, consuming systems must hardcode priority logic |
+| **Error Diagnostics** | Whether API error responses distinguish between invalid requests, not-yet-published data, empty result sets, and server errors | Ordinal: none / basic / informative | If every failed query returns the same generic empty response regardless of cause, consumers cannot distinguish between a malformed request and data that does not exist |
+| **Pagination Transparency** | Whether the API documents its result size limits and clearly signals when results are truncated | Boolean | If an API silently returns only the first 10 records of a 210-record result set, consuming systems may unknowingly operate on incomplete data |
+| **Methodology Reference** | Whether the data product links to its underlying collection methodology, survey design, or technical documentation | Boolean | Users unfamiliar with domain-specific terminology cannot correctly interpret data without access to the methodology. Changes in methodology across time periods affect comparability |
+| **Data Dictionary** | Whether every field/indicator has a formal definition, not just a label | Boolean | A field labelled "LFPR (Labour Force Participation Rate, in per cent)" provides a label but not a definition. A data dictionary would explain the methodology, reference population, and computation |
+
+### Scorecard Schema
+
+Each Data Passport **must** include a quality section conforming to this structure:
+
+```json
+{
+  "quality": {
+    "scorecardVersion": "1.0.0",
+    "assessmentDate": "2026-01-15",
+    "core": {
+      "completeness": 0.94,
+      "accuracy": 0.97,
+      "uniqueness": 1.0,
+      "validity": 0.91
+    },
+    "structuralIntegrity": {
+      "typeFidelity": 0.85,
+      "nullSemantics": true,
+      "nullDocumentation": "Null values indicate data not collected. Zero values are explicit. Missing records indicate the geographic unit was not surveyed in that period.",
+      "unitStandardisation": true,
+      "precisionAppropriateness": true,
+      "identifierConsistency": 1.0,
+      "namingConventionCompliance": 0.95
+    },
+    "operational": {
+      "timeliness": "P14D",
+      "updateAdherence": 0.92,
+      "releaseCalendar": true,
+      "nextExpectedUpdate": "2026-03-15",
+      "revisionTransparency": "full",
+      "errorDiagnostics": "informative",
+      "paginationTransparency": true,
+      "methodologyReference": "https://mospi.gov.in/publication/plfs-methodology-2024",
+      "dataDictionary": true
+    }
+  }
+}
+```
+
+### Scoring Guidance
+
+For each metric, DIPs should self-assess and publish scores. The Nodal Agency may also conduct independent verification. A dataset's overall quality posture is determined by the lowest-scoring tier:
+
+| Tier | Target | Interpretation |
 |---|---|---|
-| **Completeness** | Percentage of non-null values across required fields | 0.0 – 1.0 |
-| **Accuracy** | Percentage of values that pass domain-specific validation rules | 0.0 – 1.0 |
-| **Timeliness** | Update frequency and lag between collection and publication | Duration (ISO 8601) |
-| **Consistency** | Percentage of values consistent across related fields and across time | 0.0 – 1.0 |
-| **Uniqueness** | Percentage of records with no unintended duplicates | 0.0 – 1.0 |
+| **Core Metrics** | All ≥ 0.90 | The data itself is fundamentally sound |
+| **Structural Integrity** | All boolean = true, all numeric ≥ 0.90 | The data's technical representation is reliable for automated consumption |
+| **Operational** | All boolean = true, adherence ≥ 0.85 | The data product is reliably maintained and well-documented |
 
-> **Status:** This scorecard schema is under development. Implementations should define their own quality metrics in the interim, using the structure above as a guide. A standardised JSON Schema for the scorecard will be published in a future version of this specification.
+A dataset that scores well on Core Metrics but poorly on Structural Integrity (e.g., returns all values as strings, uses inconsistent identifiers) may be usable by a human analyst but will cause systematic failures in automated pipelines and AI agents.
