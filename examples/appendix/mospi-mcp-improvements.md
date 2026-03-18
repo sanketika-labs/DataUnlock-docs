@@ -1,11 +1,5 @@
 # MoSPI MCP Server: Suggested Improvements
 
-**Based on:** Thurro evaluation report (Feb 2026), Data Unlock specification framework, and the esankhyiki-mcp GitHub repository.
-
-This document maps the gaps identified in MoSPI's current MCP implementation against the Data Unlock specification and proposes concrete improvements. The recommendations are structured by the Data Unlock layer they align with, making it clear *why* each change matters.
-
----
-
 ## 1. Prepare Layer Alignment
 
 The Prepare layer defines the foundational standards every data product must meet before it enters the ecosystem: discoverability, schema descriptors, data curation, access policies, and provenance. MoSPI's MCP server currently addresses none of these formally.
@@ -273,26 +267,3 @@ These are MCP best practices related improvements to the MCP server.
 **Current state:** The `frequency_code` parameter in PLFS is deeply misleading. Code 1 (labelled "annual") actually selects a set of 8 indicators available at annual frequency. Code 2 ("quarterly") selects a different set of 4 indicators from quarterly bulletins. Code 3 ("monthly") selects 3 indicators only available from 2025 onwards. It does not control time granularity - it selects indicator sets.
 
 **Recommended change:** Rename to `indicator_set` with values like `annual_report` (8 indicators), `quarterly_bulletin` (4 indicators), `monthly_bulletin` (3 indicators). Update the tool descriptions accordingly. This is a small change that prevents systematic misinterpretation by both humans and AI agents.
-
-### 5.3 Support Multi-Indicator Queries for ASI
-
-**Current state:** Each of ASI's 57 indicators must be fetched individually. Constructing a complete industry profile for a single NIC group and year requires 57 separate API calls.
-
-**Recommended change:** Allow `indicator_code` to accept a comma-separated list or an `all` keyword in ASI queries, returning a wide-format response with one row per NIC group and one column per indicator. This would reduce a complete industry profile from 57 calls to 1.
-
----
-
-## Summary: Priority Order
-
-Mapping the improvements against both Thurro's severity ratings and Data Unlock compliance, the highest-impact changes in order are:
-
-1. **Standard geographic identifiers + crosswalk endpoint** - resolves the #1 cross-dataset barrier (Thurro Critical, Connect layer)
-2. **Direct query MCP tool** - eliminates the 4-call overhead for common queries (Thurro Critical, Enable layer)
-3. **Informative error responses** - prevents AI agents from reaching wrong conclusions (Thurro High, Enable layer)
-4. **Data dictionary tool** - enables correct interpretation of indicators (Thurro Critical, Prepare layer)
-5. **Numeric types + unit metadata in responses** - fixes structural integrity (Thurro High, Prepare layer)
-6. **Pagination transparency** - prevents silent data truncation (Thurro Medium, Enable layer)
-7. **DCAT-AP catalogue with DataService entries** - makes datasets discoverable (Prepare layer)
-8. **JSON-LD semantic context documents** - enables automated understanding (Connect layer)
-9. **`source_ref` in MCP responses** - enables grounded AI responses (Enable + Apply layers)
-10. **Data Passport per dataset** - ties everything together (cross-cutting)
