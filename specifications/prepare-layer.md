@@ -24,6 +24,20 @@ Every Data Information Provider (DIP) **must** expose a DCAT-AP compliant metada
 
 DCAT-AP enables automated cross-institution catalogue crawling. When DIP A exposes a DCAT-AP endpoint, DIP B's catalogue can automatically discover and index A's datasets without custom integration. This is the same standard used by the European Open Data Portal and hundreds of national data portals.
 
+### API Discovery via DCAT Data Services
+
+To enable standardised discovery of API endpoints across the Data Unlock ecosystem, each DCAT-AP catalogue entry **must** include `dcat:DataService` references that map data products to their available access interfaces. This eliminates the need for a separate service registry — the catalogue itself serves as the "DNS for data APIs."
+
+| Attribute | Requirement |
+|---|---|
+| **`dcat:DataService`** | Each access interface (REST API, MCP server, SPARQL endpoint, bulk download) must be described as a `dcat:DataService` entry |
+| **`dcat:endpointURL`** | The root URL of the running service instance |
+| **`dcat:endpointDescription`** | A URL pointing to the machine-readable interface description (OpenAPI spec, MCP manifest, SPARQL service description, etc.) |
+| **`dct:conformsTo`** | The protocol or standard the service implements (e.g., OpenAPI 3.1, MCP, SPARQL 1.1, S3) |
+| **`dcat:servesDataset`** | Back-reference to the `dcat:Dataset` URI(s) served by this endpoint |
+
+This approach leverages the existing DCAT-AP harvesting mechanism — when DIP A's catalogue is crawled, the consuming system automatically discovers not just *what data exists* but *how to access it programmatically*. No additional discovery protocol is required.
+
 ### Example Endpoint Response
 
 ```json
@@ -53,6 +67,40 @@ DCAT-AP enables automated cross-institution catalogue crawling. When DIP A expos
       "dcat:accessURL": "https://data.agri.gov.example/preview/crop-yield-sample.csv",
       "dct:format": "text/csv",
       "dct:description": "Preview (first 100 rows)"
+    }
+  ],
+  "dcat:hasService": [
+    {
+      "@type": "dcat:DataService",
+      "dct:title": "Crop Yield REST API",
+      "dcat:endpointURL": "https://data.agri.gov.example/api/v2/crop-yield",
+      "dcat:endpointDescription": "https://data.agri.gov.example/api/v2/openapi.json",
+      "dct:conformsTo": "https://spec.openapis.org/oas/v3.1.0",
+      "dcat:servesDataset": "urn:dataunlock:dp:crop-yield-v2"
+    },
+    {
+      "@type": "dcat:DataService",
+      "dct:title": "Crop Yield MCP Server",
+      "dcat:endpointURL": "https://data.agri.gov.example/mcp",
+      "dcat:endpointDescription": "https://data.agri.gov.example/mcp/manifest.json",
+      "dct:conformsTo": "https://modelcontextprotocol.io/specification",
+      "dcat:servesDataset": "urn:dataunlock:dp:crop-yield-v2"
+    },
+    {
+      "@type": "dcat:DataService",
+      "dct:title": "Agriculture Knowledge Graph SPARQL Endpoint",
+      "dcat:endpointURL": "https://data.agri.gov.example/sparql",
+      "dcat:endpointDescription": "https://data.agri.gov.example/sparql/service-description",
+      "dct:conformsTo": "https://www.w3.org/TR/sparql11-protocol/",
+      "dcat:servesDataset": "urn:dataunlock:dp:crop-yield-v2"
+    },
+    {
+      "@type": "dcat:DataService",
+      "dct:title": "Crop Yield Bulk Download",
+      "dcat:endpointURL": "https://data.agri.gov.example/bulk/crop-yield/",
+      "dcat:endpointDescription": "https://data.agri.gov.example/bulk/crop-yield/manifest.json",
+      "dct:conformsTo": "https://specs.frictionlessdata.io/data-package/",
+      "dcat:servesDataset": "urn:dataunlock:dp:crop-yield-v2"
     }
   ]
 }
@@ -298,7 +346,7 @@ These metrics address data representation issues that create silent failures in 
 | **Unit Standardisation** | Whether all value fields have a documented unit of measurement from a controlled vocabulary | Boolean per field | If one dataset returns "%" as the unit, another returns "₹ crore", and a third returns values with no unit metadata, unit standardisation fails |
 | **Precision Appropriateness** | Whether numeric values use appropriate decimal precision for the domain | Boolean | GDP values returned with 15-digit decimal precision (e.g., "32411405.953773014") imply false accuracy when the underlying data is measured in crores |
 | **Identifier Consistency** | Whether entity identifiers (geographic codes, classification codes, temporal formats) are consistent across all datasets published by the same DIP | 0.0 – 1.0 | If state codes use one numbering system in dataset A and an entirely different system in dataset B, cross-dataset analysis requires a manual mapping table. This is a critical failure for automated pipelines |
-| **Naming Convention Compliance** | Whether field names, parameter names, and filter codes follow documented naming conventions and use consistent terminology across datasets | 0.0 – 1.0 | If time period is called `year` in one dataset (with format YYYY-YY), `year` in another (with format YYYY), and `quarterly_code` in a third, naming convention compliance is low |
+| **Naming Convention Compliance** | Whether field names, parameter names, and filter codes follow documented naming conventions, use consistent terminology across datasets, and are semantically accurate (i.e., the name correctly describes what the parameter controls). A parameter whose name implies one function but actually controls something else scores poorly even if consistently named. | 0.0 – 1.0 | If time period is called `year` in one dataset (with format YYYY-YY), `year` in another (with format YYYY), and `quarterly_code` in a third, naming convention compliance is low. Similarly, if a parameter named `frequency_code` with values "annual/quarterly/monthly" actually selects different *indicator sets* rather than controlling time granularity, it is semantically misleading and scores poorly. |
 
 ### Operational Metrics
 

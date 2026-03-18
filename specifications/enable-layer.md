@@ -158,9 +158,15 @@ AI-ready data products **must** be accessible through standardised, governed int
 | **Standard** | [MCP Specification](https://modelcontextprotocol.io/specification) |
 | **Purpose** | Expose data products as "tools" that LLM agents can invoke directly |
 | **Tool definitions** | Each data product must define MCP tools with clear names, descriptions, and parameter schemas |
+| **Self-documenting parameters** | Tool parameters **must** use human-readable values, enums, and standard identifiers — not opaque numeric codes. Where parameters map to a standard code system (ISO 3166, LGD, HS codes, SDMX), the parameter schema must reference that standard and accept its codes directly. Opaque internal identifiers (e.g., `state_code=25` meaning Tamil Nadu) must not be the only way to query data. |
+| **Direct query support** | MCP servers **must** support direct, single-call data retrieval for consumers who already know their parameters. Discovery/exploration tools may exist alongside direct query tools, but a mandatory multi-step workflow (e.g., discover → list indicators → fetch metadata → fetch data) must not be the only access path. |
 | **Grounding** | MCP tool responses must include `source_ref` fields pointing to Data Passport URIs |
+| **Response metadata** | Beyond `source_ref`, tool responses **must** include: `freshness` (timestamp of the most recent data), `revision_status` (e.g., provisional, revised, final), and pagination metadata (`total_records`, `returned_records`, `is_truncated`) when the result set could exceed the response limit |
+| **Error responses** | MCP tools **must** return structured error objects that distinguish between: invalid parameter values, valid parameters with no matching data, data not yet published for the requested period, and server-side errors. Generic empty responses (e.g., returning an empty array for all failure modes) are not acceptable. Error responses **should** include a `suggestion` field with corrective guidance (e.g., "Did you mean indicator X?"). |
 
 MCP provides a universal interface for AI agents to "ask for data," reducing the need for custom API wrappers for every new dataset. An agent connected to a Data Unlock MCP server can discover what data is available, query it, and receive grounded responses — all through a standardised protocol.
+
+The self-documenting parameter requirement is critical for AI consumption. When an LLM agent encounters a tool with `"enum": ["export", "import", "both"]`, it can construct a valid query from a user's natural language request without additional lookup calls. When a tool requires opaque codes (`flow_code=1` for export, `flow_code=2` for import), the agent must first discover the code mappings — adding latency, token consumption, and failure points. This is the difference between an MCP server that works *with* AI reasoning and one that works *against* it.
 
 #### Example: MCP Tool Definition
 
@@ -200,11 +206,40 @@ MCP provides a universal interface for AI agents to "ask for data," reducing the
         "type": "string",
         "format": "date-time",
         "description": "Timestamp of the most recent data in the response"
+      },
+      "revision_status": {
+        "type": "string",
+        "enum": ["provisional", "revised", "final"],
+        "description": "Whether the data is provisional, revised, or final"
+      },
+      "pagination": {
+        "type": "object",
+        "properties": {
+          "total_records": { "type": "integer" },
+          "returned_records": { "type": "integer" },
+          "is_truncated": { "type": "boolean" }
+        }
       }
     }
   }
 }
 ```
+
+#### Example: MCP Error Response
+
+When a tool call fails or returns no data, the response must help the caller diagnose and correct the issue:
+
+```json
+{
+  "status": "no_results",
+  "reason": "invalid_parameter_value",
+  "details": "state 'Tamilnadu' is not recognised. The closest match is 'Tamil Nadu' (LGD code 33).",
+  "suggestion": "Retry with state='Tamil Nadu' or state_lgd_code='33'.",
+  "valid_values_ref": "https://data.example.gov/api/v2/metadata/states"
+}
+```
+
+Possible `reason` values: `invalid_parameter_value`, `data_not_yet_published`, `empty_result_set`, `incompatible_filter_combination`, `server_error`.
 
 ### 3. Agent-to-Agent (A2A) Protocol
 
@@ -231,8 +266,3 @@ MCP provides a universal interface for AI agents to "ask for data," reducing the
 
 When a DIP updates their embedding model, all previously generated vectors become incompatible with the new model's vector space. The Vector Versioning Policy (above) addresses this operationally, but a formal specification for version negotiation between producer and consumer is still needed.
 
-### API Discovery
-
-There is currently no standardised mechanism for discovering which APIs are available across a Data Unlock ecosystem. A proposed solution is a service registry (similar to a DNS for data APIs) that maps data product URIs to their available access endpoints.
-
-**Proposed approach:** Extend the DCAT-AP catalogue entries with `dcat:endpointURL` and `dcat:endpointDescription` pointing to the OpenAPI/MCP/SPARQL endpoints for each data product.

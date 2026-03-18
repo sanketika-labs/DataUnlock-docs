@@ -89,6 +89,7 @@ Use this checklist to verify that your Data Unlock deployment conforms to the sp
 - [ ] Identifiers use W3C DIDs (for institutions) or hashed common keys (for sensitive entities)
 - [ ] An entity resolution mapping document exists for each cross-dataset link
 - [ ] PII is never transmitted in plaintext for matching purposes
+- [ ] A crosswalk API endpoint is available for runtime identifier resolution across datasets (geographic entities, time periods, classification codes), returning canonical identifiers and all dataset-specific equivalents
 
 ### Semantic Alignment
 
@@ -139,7 +140,12 @@ Use this checklist to verify that your Data Unlock deployment conforms to the sp
 
 - [ ] An MCP server is deployed exposing data products as tools
 - [ ] Each MCP tool has a clear name, description, and parameter schema
+- [ ] Tool parameters use self-documenting values: human-readable enums, standard identifiers (ISO 3166, LGD, HS codes, SDMX), and descriptive labels — not opaque numeric codes that require separate metadata lookups
+- [ ] MCP tools support direct, single-call data retrieval for consumers who already know their parameters (a mandatory multi-step discovery workflow is not the only access path)
 - [ ] MCP tool responses include `source_ref` fields pointing to Data Passport URIs
+- [ ] MCP tool responses include `freshness` (timestamp of most recent data) and `revision_status` (provisional/revised/final) metadata
+- [ ] MCP tool responses include pagination metadata (`total_records`, `returned_records`, `is_truncated`) when results may be truncated
+- [ ] MCP tools return structured error responses that distinguish between invalid parameters, not-yet-published data, empty result sets, incompatible filter combinations, and server errors (not a generic empty response for all failure modes)
 
 ### API Access
 

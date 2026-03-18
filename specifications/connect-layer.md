@@ -55,6 +55,69 @@ Adopters **must** implement entity resolution to match entities (places, organis
 }
 ```
 
+### Crosswalk API Endpoint
+
+Static entity resolution mapping documents (above) are essential for documentation, but automated pipelines and AI agents need a **runtime crosswalk service** to resolve identifiers on the fly. A DIP or Nodal Agency that publishes multiple datasets with different internal identifier systems **should** expose a crosswalk API endpoint.
+
+| Attribute | Requirement |
+|---|---|
+| **Endpoint** | REST API returning JSON-LD, queryable by entity type, source dataset, and identifier value |
+| **Supported entity types** | At minimum: geographic entities (states, districts), time periods, and classification codes (industry, commodity) |
+| **Response** | Returns the canonical identifier and all known dataset-specific equivalents |
+| **Bulk mode** | The endpoint should support batch resolution (multiple identifiers in a single request) for pipeline use cases |
+
+#### Example: Crosswalk Query
+
+**Request:** `GET /crosswalk?entity_type=state&source=plfs&value=25`
+
+**Response:**
+
+```json
+{
+  "@context": "https://dataunlock.org/contexts/entity-resolution/v1",
+  "@type": "CrosswalkResult",
+  "entity_type": "state",
+  "canonical": {
+    "identifier": "lgd:state:33",
+    "label": "Tamil Nadu",
+    "registry": "https://lgdirectory.gov.in/"
+  },
+  "equivalents": [
+    { "dataset": "plfs", "field": "state_code", "value": "25" },
+    { "dataset": "cpi", "field": "state_code", "value": "33" },
+    { "dataset": "asi", "field": "state_code", "value": "22" },
+    { "dataset": "census_2011", "field": "state_code", "value": "33" },
+    { "dataset": "iso_3166_2", "field": "code", "value": "IN-TN" }
+  ]
+}
+```
+
+#### Example: Temporal Crosswalk Query
+
+**Request:** `GET /crosswalk?entity_type=time_period&source=plfs&value=2023-24`
+
+**Response:**
+
+```json
+{
+  "@type": "CrosswalkResult",
+  "entity_type": "time_period",
+  "canonical": {
+    "financial_year": "2023-24",
+    "calendar_year_start": 2023,
+    "calendar_year_end": 2024,
+    "format": "financial_year_apr_mar"
+  },
+  "equivalents": [
+    { "dataset": "plfs", "field": "year", "value": "2023-24", "format": "financial_year" },
+    { "dataset": "cpi", "field": "year", "value": "2024", "note": "Maps to calendar year of the financial year's second half" },
+    { "dataset": "nas", "field": "year", "value": "2023-24", "format": "financial_year" }
+  ]
+}
+```
+
+This crosswalk endpoint is not a replacement for adopting standard identifiers (which remains the long-term goal) — it is a bridge that makes cross-dataset analysis viable while the ecosystem transitions to consistent identifiers.
+
 ---
 
 ## Semantic Alignment
