@@ -1,8 +1,6 @@
 # Reference: MSME Export Intelligence
 
-This reference implementation shows how Data Unlock is applied to help Micro, Small, and Medium Enterprises (MSMEs) discover and evaluate export market opportunities by linking trade statistics, regulatory data, and tariff information.
-
-> **Note:** This is an illustrative example based on an active implementation track.
+This reference illustration shows how Data Unlock is applied to help Micro, Small, and Medium Enterprises (MSMEs) discover and evaluate export market opportunities by linking trade statistics, regulatory data, and tariff information.
 
 ---
 
