@@ -1,8 +1,6 @@
 # Reference: Invest UP
 
-This reference implementation shows how Data Unlock is applied to investor facilitation — helping state investment agencies build holistic investor profiles and accelerate decision-making.
-
-> **Note:** This is an illustrative example based on an active implementation track.
+This reference illustration shows how Data Unlock is applied to investor facilitation — helping state investment agencies build holistic investor profiles and accelerate decision-making.
 
 ---
 
